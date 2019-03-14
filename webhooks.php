@@ -4,6 +4,7 @@ require "vendor/autoload.php";
 require_once('vendor/linecorp/line-bot-sdk/line-bot-sdk-tiny/LINEBotTiny.php');
 
 $access_token = 'KuqCiLHf2T7FF+nulj9ojl74DXSZ5t4H4ypbicAOlzNWdFgPp9XQ5iyAix/mkga0IJSe252HpTgoYCYD3qSV6yQEcW4TNlPF4RxnCp1NQW+aHmSlJMuJl4u+N9Osv9isauZ4YGh2QUoO5HVAFiKWAQdB04t89/1O/w1cDnyilFU=';
+$channelSecret = 'df3e2e132b677685d6529d10e77ea00c';
 
 // Get POST body content
 $content = file_get_contents('php://input');
@@ -15,12 +16,10 @@ if (!is_null($events['events'])) {
 	foreach ($events['events'] as $event) {
 		// Reply only when message sent is in 'text' format
 		if ($event['type'] == 'message' && $event['message']['type'] == 'text') {
+			
 			// Make a POST Request to Messaging API to reply to sender
 			$url = 'https://api.line.me/v2/bot/message/reply';
-		} else {
-			// Make a POST Request to Messaging API to reply to sender
-			$url = 'https://api.line.me/v2/bot/message/push';
-		}
+			
 			// Get text sent
 			$text = $event['source']['userId'];
 			// Get replyToken
@@ -49,7 +48,19 @@ if (!is_null($events['events'])) {
 			curl_close($ch);
 
 			echo $result . "\r\n";
-		//}
+		} else {
+			// Make a POST Request to Messaging API to reply to sender
+			$url = 'https://api.line.me/v2/bot/message/push';
+			
+			$pushID = $event['source']['userId'];
+			$sTextAdd = 'hello world ('.$pushID.')';
+			
+			$httpClient = new \LINE\LINEBot\HTTPClient\CurlHTTPClient($access_token);
+			$bot = new \LINE\LINEBot($httpClient, ['channelSecret' => $channelSecret]);
+			$textMessageBuilder = new \LINE\LINEBot\MessageBuilder\TextMessageBuilder($sTextAdd);
+			$response = $bot->pushMessage($pushID, $textMessageBuilder);
+			echo $response->getHTTPStatus() . ' ' . $response->getRawBody();
+		}
 	}
 }
 echo "OK";
